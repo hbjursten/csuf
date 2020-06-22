@@ -40,15 +40,6 @@ library(twitteR)
 ```
 
 ```{r}
-#twitter app developer keys
-app_name = 'CSUFSentimentAnalysis'
-consumer_key = '4FotHBNuYzgVW9eRjX7VT1gQN'
-consumer_secret = 'r8veJvJIUGERrZNOso5V8ivhRADD4niJkev4JyZmAtHu1ybTPD'
-access_token = '1260639569629700101-6HuoMzITOpjKvL8TTiLaPLwVhmiSzs'
-access_secret = 'OrCT1hOFWHNn8CU76X7hMrA1fHk3TvcBrBH9XoNDS5Wa2'
-```
-
-```{r}
 #read 1/24 of the super big dataset using read_csv instead of read.csv
 #covidtweets <- read_csv("coronavirus-through-09-June-2020-00.csv")
 covidtweets <- subset(covidtweets, lang == "en")
@@ -57,11 +48,7 @@ TD <- covidtweets %>%
 ```
 
 ```{r}
-#data("tweets")
-#library(rtweet)
-#tweets.coronavirus <- search_tweets("#coronavirus", lang = "en")
-
-
+#create random sample of the larger dataset?? this is just what the website had me do 
 TD <- covidtweets %>%
   dplyr::sample_n(size = 100)
 head(TD)
@@ -75,33 +62,32 @@ TD_Tidy$Token[3:8]%>%
 ```
 
 ```{r}
-covidtweets <- read.csv("coronavirus-through-09-June-2020-00.csv")
-head(covidtweets)
-covidtweets <- subset(covidtweets, lang == "en")
-
+#twitter info
 app_name = 'CSUFSentimentAnalysis'
 consumer_key = '4FotHBNuYzgVW9eRjX7VT1gQN'
 consumer_secret = 'r8veJvJIUGERrZNOso5V8ivhRADD4niJkev4JyZmAtHu1ybTPD'
 access_token = '1260639569629700101-6HuoMzITOpjKvL8TTiLaPLwVhmiSzs'
 access_secret = 'OrCT1hOFWHNn8CU76X7hMrA1fHk3TvcBrBH9XoNDS5Wa2'
 
+hashtags <- c("#covid19", "#coronavirus", "#coronaoutbreak")
 
+#THIS PART IS OFF
+twitterdata <- file.path(tempdir(), "twitterdata.RData")
+
+tweet_acquire(consumer_key = consumer_key,
+              consumer_secret = consumer_secret,
+              access_token = access_token, 
+              access_secret = access_secret,
+              HT = hashtags,
+              num_tweets = 1000,
+              file_name = twitterdata, #THIS IS WHAT'S CAUSING PROBLEMS
+              distinct = TRUE)
+
+load("twitterdata") #WON'T LOAD^^^
 ```
 
 ```{r}
-#subset to only include english tweets
-covidtweets <- read.csv("coronavirus-through-09-June-2020-00.csv")
-covidtweets <- subset(covidtweets, lang == "en")
-```
-
-```{r}
-#head(tweets.USA$text)
-TD_Tidy <- saotd::tweet_tidy(DataFrame = covidtweets)
-TD_Tidy$Token[3:8]%>%
-  knitr::kable("html")
-```
-
-```{r}
+#strip the text
 library(tidytext)
 TD$stripped_text <- gsub("http\\S+","",TD$text)
 
@@ -115,33 +101,14 @@ clean_TD <- TD_stem %>%
 ```
 
 ```{r}
+#here is my attempt to start a time series data plan by establishing by date, but having a lot of trouble with making time series
 start_date <- as.POSIXct('2020-03-11 00:00:00')
 end_date <- as.POSIXct('2020-06-08 00:00:00')
 options(stringAsFactors = FALSE)
 ```
 
 ```{r}
-#DON'T RUN THIS CHUNK - IT WAS JUST A TEST TO SEE IF I COULD LOOK AT SENTIMENT CHANGE OVER TIME AND DIDN'T WORK
-
-#tweets.coronavirus_data <- data.frame(date_time = tweets.coronavirus$created_at,
-#                   tweet_text = tweets.coronavirus$text,
-#                   username = tweets.coronavirus$screen_name)
-
-start_date <- as.POSIXct('2020-03-11 00:00:00')
-end_date <- as.POSIXct('2020-06-08 00:00:00')
-options(stringAsFactors = FALSE)
-
-#TD <- TD %>%
-#  mutate(created_at = as.POSIXct(created_at, format = "%a %b %d %H:%M:%S +0000 %Y"))%>%
-#  filter(created_at >= start_date & created_at <= end_date) %>%
-#  mutate(text = gsub("http://*|https://*)","",text))
-
-#clean_TD <- TD%>%
-#  dplyr::select(text) %>%
-#  unnest_tokens(word, text)%>%
-#  anti_join(stop_words)%>%
-#  filter(!word %in% c("rt","t.co"))
-
+#visualizing the unique words
 library(tidyverse)
 clean_TD %>%
   count(word, sort=TRUE)%>%
@@ -184,6 +151,7 @@ cleaned_tweets.coronavirus %>%
   labs(x="count",y="unique words", title = "unique word counts from #coronavirus tweets")
 ```
 ```{r}
+#starting to get sentiment data
 library(tidytext)
 library(textdata)
 get_sentiments("bing") %>%
@@ -195,9 +163,10 @@ get_sentiments("afinn") %>%
 get_sentiments("afinn") %>%
   filter(value=="-3")
 ```
+
 ```{r}
 #bing sentiment analysis
-bing_covid19 = cleaned_tweets.covid19 %>%
+bing_covid19 = clean_TD %>%
   inner_join(get_sentiments("bing"))%>%
   count(word, sentiment, sort=TRUE)%>%
   ungroup()
@@ -209,115 +178,44 @@ bing_covid19 %>%
   ggplot(aes(word,n,fill=sentiment))+
   geom_col(show.legend = FALSE)+
   facet_wrap(~sentiment, scales = "free_y")+
-  labs(title = "tweets containing '#covid19'",
-       y = "contribution to sentiment",
-       x = NULL)+
-  coord_flip()+
-  theme_bw()
-
-bing_coronavirus = cleaned_tweets.coronavirus %>%
-  inner_join(get_sentiments("bing"))%>%
-  count(word, sentiment, sort=TRUE)%>%
-  ungroup()
-bing_coronavirus %>%
-  group_by(sentiment)%>%
-  top_n(10)%>%
-  ungroup()%>%
-  mutate(word = reorder(word,n))%>%
-  ggplot(aes(word,n,fill=sentiment))+
-  geom_col(show.legend = FALSE)+
-  facet_wrap(~sentiment, scales = "free_y")+
-  labs(title = "tweets containing '#coronavirus'",
+  labs(title = "tweets containing '#covid19', '#coronavirus', '#coronaoutbreak'",
        y = "contribution to sentiment",
        x = NULL)+
   coord_flip()+
   theme_bw()
 ```
 
-
 ```{r}
-sentiment_bing = function(twt) {
-  #step 1: perform basic text cleaning (on the tweet) as seen earlier
-  twt_tbl = tibble(text = twt) %>%
-    mutate(
-      #remove http elements
-      stripped_text = gsub("http\\S+","",text)
-    )%>%
-    unnest_tokens(word,stripped_text)%>%
-    anti_join(stop_words)%>%
-    inner_join(get_sentiments("bing"))%>%
-    count(word,sentiment,sort=TRUE)%>%
-    ungroup()%>%
-    #create score column that assigns a -1 to all negative words, and a 1 to positive words
-    mutate(
-      score = case_when(
-        sentiment =='negative'~n*(-1),
-        sentiment =='positive'~n*1)
-    )
-  #calculate total score
-  sent.score = case_when(
-    nrow(twt_tbl)==0~0, #if there are no words, score is 0
-    nrow(twt_tbl)>0~sum(twt_tbl$score) #otherwise, sum positive and negatives
-  )
-  zero.type = case_when(
-    nrow(twt_tbl)==0~"Type 1", #type 1: no words at all, zero = no
-    nrow(twt_tbl)>0~"Type 2" #type 2: zero means sum of words = 0
-  )
-  list(score = sent.score, type = zero.type, twt_tbl = twt_tbl)
-}
-```
-
-```{r}
-tweets.covid19_sent = lapply(tweets.covid19$text,function(x){sentiment_bing(x)})
-tweets.coronavirus_sent = lapply(tweets.coronavirus$text,function(x){sentiment_bing(x)})
-
-pandemic_sentiment = bind_rows(
-  tibble(
-    pandemic = '#covid19',
-    score = unlist(map(tweets.covid19_sent,'score')),
-    type = unlist(map(tweets.covid19_sent,'type'))
-  ),
-  tibble(
-    pandemic = '#coronavirus',
-    score = unlist(map(tweets.coronavirus_sent,'score')),
-    type = unlist(map(tweets.coronavirus_sent,'type'))
-  )
-)
-ggplot(pandemic_sentiment,aes(x=score,fill=pandemic))+
-  geom_histogram(bins = 15, alpha = 0.6)+
-  facet_grid(~pandemic)+
-  theme_bw()
-```
-```{r}
+#try to visualize using a wordcloud
 library("wordcloud")
 library("wordcloud2")
 library("RColorBrewer")
 library("tm")
 
-wordcloud_covid19 <- cleaned_tweets.covid19$word
-wordcloud_coronavirus <- cleaned_tweets.coronavirus$word
-#covid19 wordcloud
-wordcloud(words = wordcloud_covid19, max.words=100,min.freq=5,colors=brewer.pal(8,"Dark2"),random.order = FALSE)
-#coronavirus wordcloud
-wordcloud(words = wordcloud_coronavirus, max.words=100,min.freq=5,colors=brewer.pal(8,"Dark2"),random.order = FALSE)
+#this is using the TD dataset, so maybe would want to do it on part of the bigger dataset?
+wordcloud_covid19 <- clean_TD$word
+#covid19, coronavirus, coronaoutbreak wordcloud
+wordcloud(words = wordcloud_covid19, max.words=100,min.freq=1,colors=brewer.pal(8,"Dark2"),random.order = FALSE)
 ```
 
 
 ```{r}
+#looking at unigrams, bygrams, and trigrams of common words from dataset
 saotd::unigram(DataFrame = TD)%>%
-  dplyr::top_n(5)%>%
+  dplyr::top_n(10)%>%
   knitr::kable("html", caption = "Twitter data Uni-Grams")
 
 saotd::bigram(DataFrame = TD)%>%
-  dplyr::top_n(5)%>%
+  dplyr::top_n(10)%>%
   knitr::kable("html", caption = "Twitter data Bi-Grams")
 
 saotd::trigram(DataFrame = TD)%>%
-  dplyr::top_n(5)%>%
+  dplyr::top_n(10)%>%
   knitr::kable("html", caption = "Twitter data Tri-Grams")
 ```
 
 ```{r}
+#tried merging some terms, but don't think it did much
 TD_Merge <- merge_terms(DataFrame = TD, term = "death rate", term_replacement = "death_rate")
 TD_Merge <- merge_terms(DataFrame = TD, term = "sporting events", term_replacement = "sporting_events")
 TD_Merge <- merge_terms(DataFrame = TD, term = "protective equipment", term_replacement = "protective_equipment")
@@ -336,20 +234,19 @@ saotd::trigram(DataFrame = TD_Merge)%>%
   dplyr::top_n(10)%>%
   knitr::kable("html", caption = "Twitter data Tri-Grams")
 ```
-
+EVERYTHING FROM HERE BELOW will not run...
+Something is wrong, but I can't figure out exactly what. I am not sure if it's different maybe because tha hashtags aren't specified? I tried something but it didn't work with the hashtags... here is the website again:https://rdrr.io/cran/saotd/f/vignettes/saotd.Rmd
 ```{r}
-TD_Bigram <- saotd::bigram(DataFrame = TD)
+#THIS WHOLE CHUNK DO NOT RUN - SOMETHING WRONG with this code... I don't know what though
+TD_Bigram <- saotd::bigram(DataFrame = TD_Merge)
+saotd::bigram_network(BiGramDataFrame = TD_Bigram,
+                      number = 30,
+                      layout = "fr",
+                      edge_color = "blue",
+                      node_color = "black",
+                      node_size = 3,
+                      set_seed = 1234)
 
-#saotd::bigram_network(BiGramDataFrame = TD_Bigram,
-#                      number = 30,
-#                      layout = "fr",
-#                      edge_color = "blue",
-#                      node_color = "black",
-#                      node_size = 3,
-#                      set_seed = 1234)
-```
-
-```{r}
 TD_Corr <- saotd::word_corr(DataFrameTidy = TD_Tidy,
                             number = 100,
                             sort = TRUE)
@@ -363,11 +260,11 @@ saotd::word_corr_network(WordCorr = TD_Corr,
 ```
 
 ```{r}
-hashtag = 
-  
-TD_Scores <- saotd::tweet_scores(DataFrameTidy = TD_Tidy,
-                                 HT_Topic = TD$hashtags)
+#https://rdrr.io/cran/saotd/f/vignettes/saotd.Rmd
 
+#undre Explore section, this part also was not working... this would be to get the sentiment
+TD_Scores <- saotd::tweet_scores(DataFrameTidy = TD_Tidy,
+                                 HT_Topic = hashtags)
 
 saotd::posneg_words(DataFrameTidy = TD_Tidy,
                     num_words = 5)
@@ -384,6 +281,8 @@ saotd::tweet_max_scores(DataFrameTidyScores = TD_Scores,
                         HT_Topic = "hashtag",
                         HT_Topic_Selection = "fake")
 ```
+
+## TOPIC ANALYSIS
 
 ```{r}
 saotd::number_topics(DataFrame = TD,
@@ -429,6 +328,9 @@ saotd::tweet_max_scores(DataFrameTidyScores = TD_Topics_Scores,
                         HT_Topic = "topic",
                         HT_Topic_Selection = "United")
 ```
+
+## VISUALIZATIONS
+
 ```{r}
 saotd::tweet_corpus_distribution(DataFrameTidyScores = TD_Scores,
                           color = "black",
@@ -440,6 +342,7 @@ saotd::tweet_distribution(DataFrameTidyScores = TD_Scores,
                           color = "black",
                           fill = "white")
 ```
+
 ```{r}
 saotd::tweet_box(DataFrameTidyScores = TD_Scores,
                  HT_Topic = "hashtag")
@@ -447,10 +350,12 @@ saotd::tweet_box(DataFrameTidyScores = TD_Scores,
 saotd::tweet_violin(DataFrameTidyScores = TD_Scores,
                  HT_Topic = "hashtag")
 ```
+
 ```{r}
 saotd::tweet_time(DataFrameTidyScores = TD_Scores,
                   HT_Topic = "hashtag")
 ```
+
 ```{r}
 saotd::tweet_distribution(DataFrameTidyScores = TD_Topics_Scores,
                           binwidth = 1,
@@ -458,6 +363,7 @@ saotd::tweet_distribution(DataFrameTidyScores = TD_Topics_Scores,
                           color = "black",
                           fill = "white")
 ```
+
 ```{r}
 saotd::tweet_box(DataFrameTidyScores = TD_Topics_Scores,
                  HT_Topic = "topic")
@@ -465,11 +371,8 @@ saotd::tweet_box(DataFrameTidyScores = TD_Topics_Scores,
 saotd::tweet_violin(DataFrameTidyScores = TD_Topics_Scores,
                  HT_Topic = "topic")
 ```
+
 ```{r}
 saotd::tweet_time(DataFrameTidyScores = TD_Topics_Scores,
                   HT_Topic = "topic")
 ```
-```{r}
-
-```
-
