@@ -13,36 +13,36 @@ knitr::opts_knit$set(root.dir = "~/Desktop/R Working Directory")
 ```
 
 ```{r}
-#install.packages("rtweet")
+#packages I may be using
+library(rjson)
+library(jsonlite)
+library(saotd)
+library(tidyverse)
+library(lubridate)
+library(zoo)
+library(knitr)
+library(utils)
 library(rtweet)
 library(dplyr)
 library(tidyr)
 library(tidytext)
-
-library(rjson)
-library(jsonlite)
-
-library(tidyverse)
-library(lubridate)
-library(zoo)
-
-library(rtweet)
-library(dplyr)
 library(tidyverse)
 #install.packages("twitteR")
 library(twitteR)
 
+#this is just something I saw may be important so that it doesn't convert items in chart to factors
 options(stringsAsFactors = FALSE)
 ```
 
 ```{r}
+#twitter developer info
 app_name = 'CSUFSentimentAnalysis'
 consumer_key = '4FotHBNuYzgVW9eRjX7VT1gQN'
 consumer_secret = 'r8veJvJIUGERrZNOso5V8ivhRADD4niJkev4JyZmAtHu1ybTPD'
 access_token = '1260639569629700101-6HuoMzITOpjKvL8TTiLaPLwVhmiSzs'
 access_secret = 'OrCT1hOFWHNn8CU76X7hMrA1fHk3TvcBrBH9XoNDS5Wa2'
 
-
+#create token to get tweets from
 create_token(app=app_name,
              consumer_key = consumer_key,
              consumer_secret = consumer_secret,
@@ -51,127 +51,161 @@ create_token(app=app_name,
 ```
 
 ```{r}
-tweets.covid19 <- search_tweets("#covid19", n=100, lang = "en")
-tweets.covid19
-tweets.coronavirus <- search_tweets("#coronavirus", n=100, lang = "en")
+#search tweets
+tweets.covid19 <- search_tweets("#covid19", lang = "en", n = 1000, include_rts = FALSE)
+
+tweets.coronavirus <- search_tweets("#coronavirus", lang = "en", n = 1000, include_rts = FALSE)
+tweets.airquality <- search_tweets("airquality", lang = "en", n = 1000, include_rts = FALSE)
 ```
 
+I searched for #covid19, #coronavirus, and #airquality for now because I saw that airquality had improved from people sheltering in place, but searching it didn't really help because this R package only takes from data 6-9 days prior (and a lot of shelter in place orders have been lifted already)
+
 ```{r}
-tweets.covid19 = tweets.covid19 %>% select(screen_name, text, created_at)
-tweets.covid19
-tweets.coronavirus = tweets.coronavirus %>% select(screen_name, text, created_at)
+#stemming objects
+#strip text
+tweets.covid19$stripped_text <- gsub("http\\S+","",tweets.covid19$text)
+tweets.coronavirus$stripped_text <- gsub("http\\S+","",tweets.coronavirus$text)
+tweets.airquality$stripped_text <- gsub("http\\S+","",tweets.airquality$text)
 
-#head(tweets.USA$text)
-tweets.covid19$stripped_text1 <- gsub("http\\S+","",tweets.covid19$text)
-
+#stem and clean covid19
 tweets.covid19_stem <- tweets.covid19 %>%
-  select(stripped_text1) %>%
-  unnest_tokens(word, stripped_text1)
-head(tweets.covid19_stem)
-#remove stop words
-cleaned_tweets.covid19 <- tweets.covid19_stem %>%
+  select(stripped_text) %>%
+  unnest_tokens(word, stripped_text)
+cleaned_tweets.covid19 <- tweets.covid19_stem%>%
   anti_join(stop_words)
 head(cleaned_tweets.covid19)
-head(tweets.covid19$text)
 
-tweets.coronavirus$stripped_text2 <- gsub("https\\S+","",tweets.coronavirus$text)
-
+#stem and clean coronavirus
 tweets.coronavirus_stem <- tweets.coronavirus %>%
-  select(stripped_text2) %>%
-  unnest_tokens(word, stripped_text2)
-
-head(tweets.coronavirus_stem)
-#remove stop words
-cleaned_tweets.coronavirus <- tweets.coronavirus_stem %>%
+  select(stripped_text) %>%
+  unnest_tokens(word, stripped_text)
+cleaned_tweets.coronavirus <- tweets.coronavirus_stem%>%
   anti_join(stop_words)
 head(cleaned_tweets.coronavirus)
+
+#stem and clean nature
+tweets.airquality_stem <- tweets.airquality %>%
+  select(stripped_text) %>%
+  unnest_tokens(word, stripped_text)
+cleaned_tweets.airquality <- tweets.airquality_stem%>%
+  anti_join(stop_words)
+head(cleaned_tweets.airquality)
 ```
+^^this chunk is where I cleaned the text
 
 ```{r}
-#top 10 words in #covid19 tweets
-cleaned_tweets.covid19 %>%
-  count(word, sort=TRUE)%>%
-  top_n(10) %>%
-  mutate(word = reorder(word,n))%>%
-  ggplot(aes(x=word,y=n))+
+#visualize cleaned #covid19 tweets
+cleaned_tweets.covid19%>%
+  count(word, sort = TRUE)%>%
+  top_n(10)%>%
+  mutate(word = reorder(word, n))%>%
+  ggplot(aes(x=word, y =n))+
   geom_col()+
   xlab(NULL)+
   coord_flip()+
   theme_classic()+
-  labs(x="count",y="unique words", title = "unique word counts from #covid19 tweets")
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word counts found in #covid19 tweets")
 
-#top 10 words in #covid19 tweets
-cleaned_tweets.coronavirus %>%
-  count(word, sort=TRUE)%>%
-  top_n(10) %>%
-  mutate(word = reorder(word,n))%>%
-  ggplot(aes(x=word,y=n))+
+#visualize #coronavirus tweets
+cleaned_tweets.coronavirus%>%
+  count(word, sort = TRUE)%>%
+  top_n(10)%>%
+  mutate(word = reorder(word, n))%>%
+  ggplot(aes(x=word, y =n))+
   geom_col()+
   xlab(NULL)+
   coord_flip()+
   theme_classic()+
-  labs(x="count",y="unique words", title = "unique word counts from #coronavirus tweets")
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word counts found in #coronavirus tweets")
+
+#visualize #airquality tweets
+cleaned_tweets.airquality%>%
+  count(word, sort = TRUE)%>%
+  top_n(10)%>%
+  mutate(word = reorder(word, n))%>%
+  ggplot(aes(x=word, y =n))+
+  geom_col()+
+  xlab(NULL)+
+  coord_flip()+
+  theme_classic()+
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word counts found in #airquality tweets")
 ```
+
 ```{r}
-library(tidytext)
-library(textdata)
-get_sentiments("bing") %>%
+#get bing lexicon sentiment
+get_sentiments("bing")%>%
   filter(sentiment=="positive")
-get_sentiments("bing") %>%
+
+get_sentiments("bing")%>%
   filter(sentiment=="negative")
-get_sentiments("afinn") %>%
+
+#afinn sentiments
+get_sentiments("afinn")%>%
   filter(value=="3")
-get_sentiments("afinn") %>%
+
+get_sentiments("afinn")%>%
   filter(value=="-3")
 ```
+
 ```{r}
 #bing sentiment analysis
-bing_covid19 = cleaned_tweets.covid19 %>%
+bing_covid19 = cleaned_tweets.covid19%>%
   inner_join(get_sentiments("bing"))%>%
-  count(word, sentiment, sort=TRUE)%>%
+  count(word, sentiment, sort = TRUE) %>%
   ungroup()
-bing_covid19 %>%
+bing_covid19
+
+bing_covid19%>%
   group_by(sentiment)%>%
   top_n(10)%>%
   ungroup()%>%
-  mutate(word = reorder(word,n))%>%
-  ggplot(aes(word,n,fill=sentiment))+
+  mutate(word = reorder(word, n))%>%
+  ggplot(aes(word, n, fill = sentiment))+
   geom_col(show.legend = FALSE)+
   facet_wrap(~sentiment, scales = "free_y")+
-  labs(title = "tweets containing '#covid19'",
+  labs(title = "Tweets containing '#covid19'",
        y = "contribution to sentiment",
        x = NULL)+
-  coord_flip()+
+  coord_flip() +
   theme_bw()
 ```
+This figure shows specific words and how they contribute to the sentiment for #covid19. I can do this same thing with the other hashtags though.
+
 ```{r}
-sentiment_bing = function(twt) {
-  #step 1: perform basic text cleaning (on the tweet) as seen earlier
-  twt_tbl = tibble(text = twt) %>%
+sentiment_bing = function(twt){
+  #step 1: perform basic text cleaning(on the tweet), as seen earlier
+  twt_tbl = tibble(text = twt)%>%
     mutate(
       #remove http elements
       stripped_text = gsub("http\\S+","",text)
     )%>%
-    unnest_tokens(word,stripped_text)%>%
+    unnest_tokens(word, stripped_text)%>%
     anti_join(stop_words)%>%
-    inner_join(get_sentiments("bing"))%>%
+    inner_join(get_sentiments("bing"))%>% #merge with bing sentiment
     count(word,sentiment,sort=TRUE)%>%
     ungroup()%>%
-    #create score column that assigns a -1 to all negative words, and a 1 to positive words
+    #create "score" column that assigns a -1 to all negative words, and 1 to all positive words
     mutate(
       score = case_when(
-        sentiment =='negative'~n*(-1),
-        sentiment =='positive'~n*1)
-    )
-  #calculate total score
+        sentiment=='negative'~n*(-1),
+        sentiment=='positive'~n*1)
+      )
+  ##calculate total score
   sent.score = case_when(
     nrow(twt_tbl)==0~0, #if there are no words, score is 0
-    nrow(twt_tbl)>0~sum(twt_tbl$score) #otherwise, sum positive and negatives
+    nrow(twt_tbl)>0~sum(twt_tbl$score)
   )
+  ##this is to keep track of which tweets contained no words at all from the bing list
   zero.type = case_when(
-    nrow(twt_tbl)==0~"Type 1", #type 1: no words at all, zero = no
+    nrow(twt_tbl)==0~"Type 1", #type 1: no words at all, zero =  no
     nrow(twt_tbl)>0~"Type 2" #type 2: zero means sum of words = 0
-  )
+    )
   list(score = sent.score, type = zero.type, twt_tbl = twt_tbl)
 }
 ```
@@ -179,30 +213,196 @@ sentiment_bing = function(twt) {
 ```{r}
 tweets.covid19_sent = lapply(tweets.covid19$text,function(x){sentiment_bing(x)})
 tweets.coronavirus_sent = lapply(tweets.coronavirus$text,function(x){sentiment_bing(x)})
+tweets.airquality_sent = lapply(tweets.airquality$text,function(x){sentiment_bing(x)})
+```
 
+```{r}
 pandemic_sentiment = bind_rows(
   tibble(
-    pandemic = '#covid19',
+    hashtag = '#covid19',
     score = unlist(map(tweets.covid19_sent,'score')),
     type = unlist(map(tweets.covid19_sent,'type'))
   ),
   tibble(
-    pandemic = '#coronavirus',
+    hashtag = '#coronavirus',
     score = unlist(map(tweets.coronavirus_sent,'score')),
     type = unlist(map(tweets.coronavirus_sent,'type'))
+  ),
+  tibble(
+    hashtag = '#airquality',
+    score = unlist(map(tweets.airquality_sent,'score')),
+    type = unlist(map(tweets.airquality_sent,'type'))
   )
 )
-ggplot(pandemic_sentiment,aes(x=score,fill=pandemic))+
-  geom_histogram(bins = 15, alpha = 0.6)+
-  facet_grid(~pandemic)+
-  theme_bw()
+pandemic_sentiment
 ```
 
+```{r}
+#visualize the three sentiments
+ggplot(pandemic_sentiment,aes(x=score, fill = hashtag))+
+  geom_histogram(bins = 15, alpha=0.6)+
+  facet_grid(~hashtag)+
+  theme_bw()
+```
+This figure shows that there are more negative sentiments surrounding #covid19 and #coronavirus, but seemingly either neutral or more positive sentiment toward #airquality (when you exclude the 0 values meaning no sentiment).
+
+```{r}
+#here is where I practiced time series plotting
+#it worked for airquality bc not much twitter data on it compared to covid/coronavirus
+rt <- search_tweets("#rstats", n = 100, include_rts = FALSE)
+tweets.airquality%>%
+  ts_plot("3 hours")+
+  ggplot2::theme_minimal()+
+  ggplot2::theme(plot.title = ggplot2::element_text(face="bold"))+
+  ggplot2::labs(
+    x=NULL, y=NULL,
+    title = "Frequency of #airquality Twitter statuses from past 9 days",
+    subtitle = "Twitter status (tweet) counts aggregated using 24 hour intervals",
+    caption = "\nSource: Data collected from Twitter's REST API via rtweet"
+  )
+```
+FROM HERE AND BELOW:
+I was experimenting trying to get geolocation data so I could see where the positive/negative sentiments were coming from. I couldn't get my Google API key to work though, and then ran into problems because I couldn't get map data, and only about 1% of all tweets are geocoded (making it hard to analyze that).
+
+
+```{r}
+#packages I may need for mapping
+library("dplyr")
+library("forcats")
+library(ggmap)
+register_google(key = "AIzaSyAFMKW1p3CFlrTVTUAjD2D-8phPGnCwV3U")
+#install.packages("googleway")
+```
+
+```{r}
+#install.packages("ggmap")
+library("ggmap")
+library("forcats")
+us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
+get_stamenmap(us, zoom = 5, maptype = "toner-lite")%>% 
+  ggmap()
 
 
 
+`%notin%` <- function(lhs, rhs) !(lhs %in% rhs)
+hashtags <- tweets.covid19 %>%
+  filter(
+    hashtag %notin% c("covid19"),
+    -95.39681 <= lon & lon <= -95.34188,
+    29.73631 <= lat & lat <= 29.78400
+  ) %>%
+  mutate(
+    hashtag = fct_drop(hashtag),
+    hashtag = fct_relevel(hashtag, c("covid19", "coronavirus", "airquality"))
+  )
 
+qmplot(lon, lat, data = pandemic_sentiment, maptype = "toner-lite", color = I("red"))
+```
+```{r}
+# download the data 
+download.file("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip", 
+              destfile = 'coastlines.zip')
 
+# unzip the file
+unzip(zipfile = "coastlines.zip", 
+      exdir = 'ne-coastlines-10m')
 
+library(rgdal)
+library(raster)
+library(ggplot2)
+library(rgeos)
+library(mapview)
+library(leaflet)
+library(broom) # if you plot with ggplot and need to turn sp data into dataframes
+options(stringsAsFactors = FALSE)
 
+coastlines <- readOGR("ne-coastlines-10m/ne_10m_coastline.shp")
+class(coastlines)
+library(raster)
+extent(coastlines)
+crs(coastlines)
+plot(coastlines,
+     main = "Global Coastlines")
 
+coastlines_simp <- gSimplify(coastlines,
+                             tol = .1,
+                             topologyPreserve = TRUE)
+plot(coastlines_simp,
+     main = "map with boundaries simplified")
+
+coastlines_simp_df <- SpatialLinesDataFrame(coastlines_simp, coastlines@data)
+ggplot()+
+  geom_path(data = coastlines_simp_df, aes(x = long, y = lat, group = group))+
+  coord_fixed()+
+  labs(title = "Global Coastlines - using ggplot",
+       subtitle = "my awesome subtitle",
+       x = "", y = "")
+
+mapview(coastlines_simp)
+leaflet(coastlines_simp)%>%
+  addTiles()%>%
+  addPolylines(color = "#44444", weight = 1, smoothFactor = 0.5, opacity = 1.0)
+
+library(sf)
+coastlines_sf <- st_read("ne-coastlines-10m/ne_10m_coastline.shp")
+plot(coastlines_sf[2])
+```
+```{r}
+library(usmap)
+plot_usmap(regions = "states")+
+  labs(title = "US States",
+       subtitle = "blank map of states")+
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"))
+
+plot_usmap(include = c("CA", "ID", "NV", "OR", "WA"))+
+  labs(title = "Western US States",
+       subtitle = "These are the states in the Pacifici Timezone")
+
+plot_usmap(data = statepop, values = "pop_2015", color = "red") + 
+  scale_fill_continuous(name = "Population (2015)", label = scales::comma) + 
+  theme(legend.position = "right")
+
+plot_usmap(data = statepop, values = "pop_2015", color = "red") + 
+  scale_fill_continuous(
+    low = "white", high = "red", name = "tweets", label = scales::comma
+  ) + theme(legend.position = "right")
+
+plot_usmap(
+    data = statepop, values = "pop_2015", include = c("CA", "ID", "NV", "OR", "WA"), color = "red"
+  ) + 
+  scale_fill_continuous(
+    low = "white", high = "red", name = "Population (2015)", label = scales::comma
+  ) + 
+  labs(title = "Western US States", subtitle = "These are the states in the Pacific Timezone.") +
+  theme(legend.position = "right")
+
+usmap::plot_usmap(include = .south_region, exclude = .east_south_central)
+
+usmap::plot_usmap("counties", 
+                  include = c(.south_region, "IA"), 
+                  exclude = c(.east_south_central, "12"))  # 12 = FL
+
+usmap::plot_usmap("counties", fill = "yellow", alpha = 0.25,
+                  # 06065 = Riverside County, CA
+                  include = c(.south_region, "IA", "06065"),
+                  # 12 = FL, 48141 = El Paso County, TX
+                  exclude = c(.east_south_central, "12", "48141"))
+
+str(usmap::us_map())
+```
+
+```{r}
+#THIS DIDN'T WORK
+library(ggmap)
+library(twitteR)
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+tweets <- searchTwitter("#covid19 OR #coronavirus OR #airquality", n = 200, lang = "en")
+tweets.df <- twListToDF(tweets)
+write.csv(tweets.df, "~\\Desktop\\R Working Directory\\test.csv")
+library(leaflet)
+library(maps)
+read.csv("test.csv", stringsAsFactors = FALSE)
+m <- leaflet(mymap)%>%
+  addTiles()
+```
