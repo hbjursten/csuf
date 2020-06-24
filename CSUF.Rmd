@@ -16,7 +16,7 @@ knitr::opts_knit$set(root.dir = "~/Desktop/R Working Directory")
 #packages I may be using
 library(rjson)
 library(jsonlite)
-library(saotd)
+#library(saotd)
 library(tidyverse)
 library(lubridate)
 library(zoo)
@@ -28,7 +28,7 @@ library(tidyr)
 library(tidytext)
 library(tidyverse)
 #install.packages("twitteR")
-library(twitteR)
+#library(twitteR) #not updated since 2016 use rtweet version
 
 #this is just something I saw may be important so that it doesn't convert items in chart to factors
 options(stringsAsFactors = FALSE)
@@ -54,6 +54,9 @@ create_token(app=app_name,
 #search tweets
 tweets.covid19 <- search_tweets("#covid19", lang = "en", n = 1000, include_rts = FALSE)
 
+#############tweets.test <- search_fullarchive("#covid19",  n = 100, env_name = "research",  fromDate = "202003150000", toDate = "201403202359") something like this should work once we get premium access 
+
+
 tweets.coronavirus <- search_tweets("#coronavirus", lang = "en", n = 1000, include_rts = FALSE)
 tweets.airquality <- search_tweets("airquality", lang = "en", n = 1000, include_rts = FALSE)
 ```
@@ -68,9 +71,9 @@ tweets.coronavirus$stripped_text <- gsub("http\\S+","",tweets.coronavirus$text)
 tweets.airquality$stripped_text <- gsub("http\\S+","",tweets.airquality$text)
 
 #stem and clean covid19
-tweets.covid19_stem <- tweets.covid19 %>%
-  select(stripped_text) %>%
-  unnest_tokens(word, stripped_text)
+tweets.covid19_stem <- tweets.covid19 %>% ## couldn't get this to work
+  select(stripped_text) %>% # selects this column
+  unnest_tokens(word, stripped_text)   #cleans text using tidy text. 
 cleaned_tweets.covid19 <- tweets.covid19_stem%>%
   anti_join(stop_words)
 head(cleaned_tweets.covid19)
@@ -347,6 +350,7 @@ library(sf)
 coastlines_sf <- st_read("ne-coastlines-10m/ne_10m_coastline.shp")
 plot(coastlines_sf[2])
 ```
+
 ```{r}
 library(usmap)
 plot_usmap(regions = "states")+

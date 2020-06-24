@@ -24,14 +24,14 @@ knitr::opts_knit$set(root.dir = "~/Desktop/R Working Directory")
 #packages I may be using
 library(rjson)
 library(jsonlite)
-library(saotd)
+library(saotd) #i can't get this one to install on my version of R
 library(tidyverse)
 library(lubridate)
 library(zoo)
 library(knitr)
 library(utils)
 library(rtweet)
-library(dplyr)
+library(dplyr) #########this is part of tidyverse so you don't have to call it individually
 library(tidyr)
 library(tidytext)
 library(tidyverse)
@@ -80,7 +80,7 @@ tweet_acquire(consumer_key = consumer_key,
               access_secret = access_secret,
               HT = hashtags,
               num_tweets = 1000,
-              file_name = twitterdata, #THIS IS WHAT'S CAUSING PROBLEMS
+              file_name = twitterdata.RData, #THIS IS WHAT'S CAUSING PROBLEMS
               distinct = TRUE)
 
 load("twitterdata") #WON'T LOAD^^^

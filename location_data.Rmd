@@ -1,0 +1,41 @@
+---
+title: "Lily_test"
+author: "Lily Zhao"
+date: "6/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Since Google Maps implemented stricter API requirements, sending requests to Google’s API isn’t
+very convenient. To enable basic uses without requiring a Google Maps API key, a number of the
+major cities throughout the word and the following two larger locations are baked into this function: ’world’ and ’usa’. If ’world’ is supplied then a bounding box of maximum latitutde/longitude values, i.e., c(-180,-90,180,90), and a center point c(0,0) are returned. If ’usa’ is supplied then estimates of the United States’ bounding box and mid-point are returned. To specify a city, provide the city name followed by a space and then the US state abbreviation or country name. To see a list of all included cities, enter rtweet:::citycoords in the R console to see coordinates data.
+
+```{r}
+#see pg 40 of for lookup_coords in rtweet manual to decide whether u want to apply for a google api key or if you are happy w just using different cities that are built into rtweet. 
+
+
+#dataset for just the USA
+tweets.covid19USA <- search_tweets("#covid19", lang = "en", n = 1000, include_rts = FALSE, geocode = lookup_coords("usa"))
+
+### this is a data set for london: 
+tweets.covid19london<- search_tweets("#covid19", lang = "en", n = 1000, include_rts = FALSE, geocode = lookup_coords("london"))
+
+
+and then you can combine the dataframes
+                          
+                       
+```
+
+install ggmap
+```{r}
+library(ggmap)
+```
+rtweet also enables one to geocode tweets for users who allow Twitter to track their location:
+```{r}
+geocoded <- lat_lng(tweets.covid19$)
+```
+
