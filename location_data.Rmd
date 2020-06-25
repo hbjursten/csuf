@@ -25,7 +25,7 @@ tweets.covid19USA <- search_tweets("#covid19", lang = "en", n = 1000, include_rt
 tweets.covid19london<- search_tweets("#covid19", lang = "en", n = 1000, include_rts = FALSE, geocode = lookup_coords("london"))
 
 
-and then you can combine the dataframes
+#and then you can combine the dataframes
                           
                        
 ```
@@ -36,6 +36,7 @@ library(ggmap)
 ```
 rtweet also enables one to geocode tweets for users who allow Twitter to track their location:
 ```{r}
-geocoded <- lat_lng(tweets.covid19$)
+geocoded <- lat_lng(tweets.covid19USA)
+head(geocoded)
 ```
 

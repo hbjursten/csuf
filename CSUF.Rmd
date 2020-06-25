@@ -43,12 +43,26 @@ access_token = '1260639569629700101-6HuoMzITOpjKvL8TTiLaPLwVhmiSzs'
 access_secret = 'OrCT1hOFWHNn8CU76X7hMrA1fHk3TvcBrBH9XoNDS5Wa2'
 
 #create token to get tweets from
-create_token(app=app_name,
+token <- create_token(app=app_name,
              consumer_key = consumer_key,
              consumer_secret = consumer_secret,
              access_token = access_token,
              access_secret = access_secret)
 ```
+```{r}
+search_fullarchive(
+q,
+n = 100,
+fromDate = 202003111200,
+toDate = 202006201200,
+env_name = sandboxdev,
+safedir = csuf,
+parse = TRUE,
+token = token
+)
+```
+
+
 
 ```{r}
 #search tweets
