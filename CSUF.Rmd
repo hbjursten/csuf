@@ -563,7 +563,9 @@ word_count_AL<- text_words %>%
 df_order <- df %>% 
             arrange(desc(freq))
 ```
+
 ```{r}
+#HERE IS WHAT I TRIED SO FAR - this is plotting top words of AL
 text_words <- covid_all %>%
   tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
   anti_join(stop_words, by = 'word') %>%
