@@ -14,9 +14,6 @@ knitr::opts_knit$set(root.dir = "~/Desktop/R Working Directory")
 
 ```{r}
 #packages I may be using
-library(rjson)
-library(jsonlite)
-#library(saotd)
 library(tidyverse)
 library(lubridate)
 library(zoo)
@@ -26,9 +23,12 @@ library(rtweet)
 library(dplyr)
 library(tidyr)
 library(tidytext)
-library(tidyverse)
-#install.packages("twitteR")
-#library(twitteR) #not updated since 2016 use rtweet version
+library(wordcloud)
+library(RCurl)
+library(httr)
+library(tm)
+library(wordcloud)
+library(syuzhet)
 
 #this is just something I saw may be important so that it doesn't convert items in chart to factors
 options(stringsAsFactors = FALSE)
@@ -43,384 +43,774 @@ access_token = '1260639569629700101-6HuoMzITOpjKvL8TTiLaPLwVhmiSzs'
 access_secret = 'OrCT1hOFWHNn8CU76X7hMrA1fHk3TvcBrBH9XoNDS5Wa2'
 
 #create token to get tweets from
-token <- create_token(app=app_name,
+token <- rtweet::create_token(app=app_name,
              consumer_key = consumer_key,
              consumer_secret = consumer_secret,
              access_token = access_token,
              access_secret = access_secret)
 ```
+
 ```{r}
-search_fullarchive(
-q,
-n = 100,
-fromDate = 202003111200,
-toDate = 202006201200,
-env_name = sandboxdev,
-safedir = csuf,
-parse = TRUE,
-token = token
+#blm_tweets <- search_fullarchive(
+#"#covid19",
+#n = 100,
+#fromDate = "03110000",
+#toDate = "05310000",
+#env_name = "csuf",
+#safedir = NULL,
+#parse = TRUE,
+#token = token,
+#)
+
+#rt <- search_fullarchive("#rstats", n = 300, env_name = "csuf",
+#fromDate = "201401010000", toDate = "201401312359")
+#rt
+
+#blm_tweets
+#sent_nrc1 <- blm_tweets %>%
+#  tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
+#  anti_join(stop_words, by = 'word') %>%
+#  inner_join(sentiments_n, by = 'word')
+
+# What are the most common sentiment groups (by NRC)?
+#nrc_count1 <- sent_nrc1 %>% 
+#  group_by(sentiment) %>% 
+#  tally()
+```
+
+```{r}
+#Berkeley <- search_fullarchive(q = "(covid19 OR coronavirus OR #covid19 OR #coronavirus) lang:en place:Berkeley", n = 100, fromDate = "202003110000", toDate = "202005312359", env = "csuf", parse = TRUE, token = token)
+#Berkeley
+```
+
+```{r}
+#searching different locations
+#76.7%clinton support
+tweets.covid19SF <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR politics OR trump OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "37.7749,-122.4194,5mi") %>% 
+  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+  mutate(place= "san francisco")
+tweets.covid19SF
+
+#72.9%clinton support
+tweets.covid19sanjose <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR politics OR trump OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "37.3382,-121.8863,5mi") %>% 
+  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+  mutate(place= "san jose")
+tweets.covid19sanjose
+
+#68.2%clinton support
+tweets.covid19DC <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "38.9072,-77.0369,5mi") %>% 
+  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+  mutate(place= "washington DC")
+tweets.covid19DC
+
+#58.6%trump support
+tweets.covid19birmingham <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "33.5186,-86.8104,5mi") %>%
+  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+  mutate(place= "birmingham")
+tweets.covid19birmingham
+
+#58.5%trump support
+tweets.covid19OK <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "35.4676,-97.5164,5mi") %>% 
+  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+  mutate(place= "oklahoma city")
+tweets.covid19OK
+
+#56.6% trump support
+tweets.covid19jacksonville <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "30.3322,-81.6557,5mi") %>%
+  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+  mutate(place= "jacksonville")
+tweets.covid19jacksonville
+
+
+#"#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid AND liberal OR democrat OR conservative OR republican OR pandemic OR mask OR #wearamask OR #chinavirus OR #kungflu OR protest OR protesting OR #blm OR blacklivesmatter OR blm OR #blacklivesmatter"
+
+#science OR #science OR research OR #research OR health OR healthcare OR #health OR #healthcare OR mask OR #wearamask OR pandemic"
+
+#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid AND science OR #science OR air OR nature OR environment OR climate OR research
+```
+
+```{r}
+#binding to covid all
+covid_all<- rbind(tweets.covid19SF, tweets.covid19sanjose)
+covid_all<- rbind(covid_all, tweets.covid19DC)
+covid_all<- rbind(covid_all, tweets.covid19birmingham)
+covid_all<- rbind(covid_all, tweets.covid19OK)
+covid_all<- rbind(covid_all, tweets.covid19jacksonville)
+covid_all
+```
+
+```{r}
+head(stop_words) ### common words that won't impact analysis
+
+stop_words$lexicon %>% unique() #snowball is a lexicon on stopwords we can use
+stop_words <- get_stopwords(language = 'en', source = 'snowball')
+
+sentiments_b <- get_sentiments('bing')
+sentiments_a <- get_sentiments('afinn')
+sentiments_n <- get_sentiments('nrc') #we will use this one
+sentiments_l <- get_sentiments('loughran')
+```
+
+
+```{r}
+#create sentiment plots
+sent_nrc <- covid_all %>%
+  tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
+  anti_join(stop_words, by = 'word') %>%
+  inner_join(sentiments_n, by = 'word')
+  
+# What are the most common sentiment groups (by NRC)?
+nrc_count <- sent_nrc %>% 
+  group_by(place, sentiment) %>% 
+  tally()
+nrc_count
+
+nrc_count <- nrc_count %>%
+  mutate(sentiment = factor(sentiment, levels = c("joy","disgust","surprise","anger","anticipation","sadness","fear","trust","positive","negative")))
+#you can turn these into proportions rather than counts. 
+allplot <- ggplot(nrc_count, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+allplot
+
+SF <- subset(nrc_count,place=="san francisco")
+SFplot <- ggplot(SF, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+SFplot
+
+SJ <- subset(nrc_count,place=="san jose")
+SJplot <- ggplot(SJ, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+SJplot
+
+DC <- subset(nrc_count,place=="washington DC")
+DCplot <- ggplot(DC, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+DCplot
+
+AL <- subset(nrc_count,place=="birmingham")
+ALplot <- ggplot(AL, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+ALplot
+#you can lookup environment and see if they are in these tweets and also look up hashtags related to the environment and corona together and do somethign like this. 
+
+OK <- subset(nrc_count,place=="oklahoma city")
+OKplot <- ggplot(OK, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+OKplot
+
+FL <- subset(nrc_count,place=="jacksonville")
+FLplot <- ggplot(FL, aes(x = sentiment, y = n)) +
+geom_col(aes(fill = sentiment), show.legend = FALSE) +
+coord_flip() +
+scale_fill_brewer(palette = "Spectral") + # Note: need package RColorBrewer
+theme_light() +
+scale_x_discrete(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) #+
+FLplot
+
+p1 <- allplot
+p2 <- SFplot
+p3 <- SJplot
+p4 <- DCplot
+p5 <- ALplot
+p6 <- OKplot
+p7 <- FLplot
+library(gridExtra)
+
+grid.arrange(p2, p3, p4, nrow = 3)
+grid.arrange(p5, p6, p7, nrow = 3)
+```
+
+```{r}
+view(tweets.covid19SF)
+view(tweets.covid19birmingham)
+
+testSF <- subset(sent_nrc, sentiment == "anger")
+testSF <- subset(testSF, place == "san francisco")
+testSF[sample(nrow(testSF), 3), ]
+
+testAL <- subset(sent_nrc, sentiment == "anger")
+testAL <- subset(testAL, place == "birmingham")
+testAL[sample(nrow(testAL), 3), ]
+
+#disgust!!!
+testSF2 <- subset(sent_nrc, sentiment == "disgust")
+testSF2 <- subset(testSF, place == "san francisco")
+testSF2[sample(nrow(testSF2), 3), ]
+
+testAL2 <- subset(sent_nrc, sentiment == "disgust")
+testAL2 <- subset(testAL2, place == "birmingham")
+testAL2[sample(nrow(testAL2), 3), ]
+
+#joy!!!
+testSF3 <- subset(sent_nrc, sentiment == "joy")
+testSF3 <- subset(testSF3, place == "san francisco")
+testSF3[sample(nrow(testSF3), 3), ]
+
+testAL3 <- subset(sent_nrc, sentiment == "joy")
+testAL3 <- subset(testAL3, place == "birmingham")
+testAL3[sample(nrow(testAL3), 3), ]
+
+#fear!!!
+testSF4 <- subset(sent_nrc, sentiment == "fear")
+testSF4 <- subset(testSF4, place == "san francisco")
+testSF4[sample(nrow(testSF4), 3), ]
+
+testAL4 <- subset(sent_nrc, sentiment == "fear")
+testAL4 <- subset(testAL4, place == "birmingham")
+testAL4[sample(nrow(testAL4), 3), ]
+
+#sadness!!!
+testSF5 <- subset(sent_nrc, sentiment == "sadness")
+testSF5 <- subset(testSF5, place == "san francisco")
+testSF5[sample(nrow(testSF5), 3), ]
+
+testAL5 <- subset(sent_nrc, sentiment == "sadness")
+testAL5 <- subset(testAL5, place == "birmingham")
+testAL5[sample(nrow(testAL5), 3), ]
+
+#anticipation
+testSF6 <- subset(sent_nrc, sentiment == "anticipation")
+testSF6 <- subset(testSF6, place == "san francisco")
+testSF6[sample(nrow(testSF6), 3), ]
+
+testAL6 <- subset(sent_nrc, sentiment == "anticipation")
+testAL6 <- subset(testAL6, place == "birmingham")
+testAL6[sample(nrow(testAL6), 3), ]
+
+#surprise
+testSF7 <- subset(sent_nrc, sentiment == "surprise")
+testSF7 <- subset(testSF7, place == "san francisco")
+testSF7[sample(nrow(testSF7), 3), ]
+
+testAL7 <- subset(sent_nrc, sentiment == "surprise")
+testAL7 <- subset(testAL7, place == "birmingham")
+testAL7[sample(nrow(testAL7), 3), ]
+
+#trust
+testSF8 <- subset(sent_nrc, sentiment == "trust")
+testSF8 <- subset(testSF8, place == "san francisco")
+testSF8
+#testSF8[sample(nrow(testSF8), 3), ]
+
+testAL8 <- subset(sent_nrc, sentiment == "trust")
+testAL8 <- subset(testAL8, place == "birmingham")
+testAL8[sample(nrow(testAL8), 3), ]
+view(testAL8)
+```
+
+```{r}
+#angerplot
+SFanger <- subset(SF,sentiment=="anger")
+SJanger <- subset(SJ,sentiment=="anger")
+DCanger <- subset(DC,sentiment=="anger")
+ALanger <- subset(AL,sentiment=="anger")
+OKanger <- subset(OK,sentiment=="anger")
+FLanger <- subset(FL,sentiment=="anger")
+SFanger
+SJanger
+DCanger
+FLanger
+OKanger
+ALanger
+
+anger <- c(56,42,44,54,45,43)
+angerplot <- barplot(anger, beside = TRUE, main = "Anger Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Anger Sentiment", 
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(angerplot, 0, round(anger, 1),cex=1,pos=3) 
+```
+
+
+```{r}
+#fearplot
+SFfear <- subset(SF,sentiment=="fear")
+SJfear <- subset(SJ,sentiment=="fear")
+DCfear <- subset(DC,sentiment=="fear")
+FLfear <- subset(FL,sentiment=="fear")
+OKfear <- subset(OK,sentiment=="fear")
+ALfear <- subset(AL,sentiment=="fear")
+SFfear
+SJfear
+DCfear
+FLfear
+OKfear
+ALfear
+
+fear <- c(78,77,81,88,84,93)
+fearplot <- barplot(fear, beside = TRUE, main = "Fear Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Fear Sentiment", 
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(angerplot, 0, round(fear, 1),cex=1,pos=3) 
+```
+
+```{r}
+#disgustplot
+SFdisgust <- subset(SF,sentiment=="disgust")
+SJdisgust <- subset(SJ,sentiment=="disgust")
+DCdisgust <- subset(DC,sentiment=="disgust")
+FLdisgust <- subset(FL,sentiment=="disgust")
+OKdisgust <- subset(OK,sentiment=="disgust")
+ALdisgust <- subset(AL,sentiment=="disgust")
+SFdisgust
+SJdisgust
+DCdisgust
+FLdisgust
+OKdisgust
+ALdisgust
+
+disgust <- c(51,33,42,41,37,35)
+disgustplot <- barplot(disgust, beside = TRUE, main = "Disgust Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Disgust Sentiment", 
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(disgustplot, 0, round(disgust, 1),cex=1,pos=3) 
+```
+
+```{r}
+#sadnessplot
+SFsadness <- subset(SF,sentiment=="sadness")
+SJsadness <- subset(SJ,sentiment=="sadness")
+DCsadness <- subset(DC,sentiment=="sadness")
+FLsadness <- subset(FL,sentiment=="sadness")
+OKsadness <- subset(OK,sentiment=="sadness")
+ALsadness <- subset(AL,sentiment=="sadness")
+SFsadness
+SJsadness
+DCsadness
+FLsadness
+OKsadness
+ALsadness
+
+sadness <- c(90,70,92,77,73,93)
+sadnessplot <- barplot(sadness, beside = TRUE, main = "Sadness Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Sadness Sentiment", 
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(sadnessplot, 0, round(sadness, 1),cex=1,pos=3) 
+```
+
+```{r}
+#trustplot
+SFtrust <- subset(SF,sentiment=="trust")
+SJtrust <- subset(SJ,sentiment=="trust")
+DCtrust <- subset(DC,sentiment=="trust")
+FLtrust <- subset(FL,sentiment=="trust")
+OKtrust <- subset(OK,sentiment=="trust")
+ALtrust <- subset(AL,sentiment=="trust")
+SFtrust
+SJtrust
+DCtrust
+FLtrust
+OKtrust
+ALtrust
+
+trust <- c(86,64,71,93,105,70)
+trustplot <- barplot(trust, beside = TRUE, main = "Trust Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Trust Sentiment",
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(trustplot, 0, round(trust, 1),cex=1,pos=3)
+```
+
+```{r}
+#anticipationplot
+SFanticipation <- subset(SF,sentiment=="anticipation")
+SJanticipation <- subset(SJ,sentiment=="anticipation")
+DCanticipation <- subset(DC,sentiment=="anticipation")
+FLanticipation <- subset(FL,sentiment=="anticipation")
+OKanticipation <- subset(OK,sentiment=="anticipation")
+ALanticipation <- subset(AL,sentiment=="anticipation")
+SFanticipation
+SJanticipation
+DCanticipation
+FLanticipation
+OKanticipation
+ALanticipation
+
+anticipation <- c(66,53,58,58,70,58)
+anticipationplot <- barplot(anticipation, beside = TRUE, main = "Anticipation Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Anticipation Sentiment",
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(anticipationplot, 0, round(anticipation, 1),cex=1,pos=3)
+```
+```{r}
+#surpriseplot
+SFsurprise <- subset(SF,sentiment=="surprise")
+SJsurprise <- subset(SJ,sentiment=="surprise")
+DCsurprise <- subset(DC,sentiment=="surprise")
+FLsurprise <- subset(FL,sentiment=="surprise")
+OKsurprise <- subset(OK,sentiment=="surprise")
+ALsurprise <- subset(AL,sentiment=="surprise")
+SFsurprise
+SJsurprise
+DCsurprise
+FLsurprise
+OKsurprise
+ALsurprise
+
+surprise <- c(65,43,40,53,37,51)
+surpriseplot <- barplot(surprise, beside = TRUE, main = "Surprise Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Surprise Sentiment",
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(surpriseplot, 0, round(surprise, 1),cex=1,pos=3)
+```
+```{r}
+#joyplot
+SFjoy <- subset(SF,sentiment=="joy")
+SJjoy <- subset(SJ,sentiment=="joy")
+DCjoy <- subset(DC,sentiment=="joy")
+FLjoy <- subset(FL,sentiment=="joy")
+OKjoy <- subset(OK,sentiment=="joy")
+ALjoy <- subset(AL,sentiment=="joy")
+SFjoy
+SJjoy
+DCjoy
+FLjoy
+OKjoy
+ALjoy
+
+joy <- c(36,21,34,25,39,42)
+joyplot <- barplot(joy, beside = TRUE, main = "Joy Sentiment", 
+col = c("skyblue4", "skyblue3", "lightblue","red","red3","darkred"),
+xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"), 
+ylab = "n Tweets Containing Joy Sentiment",
+args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
+text(joyplot, 0, round(joy, 1),cex=1,pos=3)
+```
+
+
+```{r}
+#getting word counts
+text_words <- covid_all %>%
+  tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
+  anti_join(stop_words, by = 'word') %>%
+  inner_join(sentiments_n, by = 'word') %>%
+  count(word, sort = TRUE)
+text_words
+
+word_count_SF <- text_words %>% 
+  filter(place == "san francisco") %>% 
+  count(word, sort = TRUE) # Count words and arrange
+word_count_SF
+
+word_count_SJ <- text_words %>% 
+  filter(place == "san jose") %>% 
+  count(word, sort = TRUE) 
+word_count_SJ
+
+word_count_DC<- text_words %>% 
+  filter(place == "washington DC") %>% 
+  count(word, sort = TRUE) 
+word_count_DC
+
+word_count_FL<- text_words %>% 
+  filter(place == "jacksonville") %>% 
+  count(word, sort = TRUE) 
+word_count_FL
+
+word_count_OK<- text_words %>% 
+  filter(place == "oklahoma city") %>% 
+  count(word, sort = TRUE) 
+word_count_OK
+
+word_count_AL<- text_words %>% 
+  filter(place == "birmingham") %>% 
+  filter(n > 3) %>%
+  count(word, sort = TRUE) 
+
+df_order <- df %>% 
+            arrange(desc(freq))
+```
+```{r}
+text_words <- covid_all %>%
+  tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
+  anti_join(stop_words, by = 'word') %>%
+  inner_join(sentiments_n, by = 'word') %>%
+  count(word, sort = TRUE)
+text_words
+
+df_order <- text_words %>% 
+            arrange(desc(n))
+df_order
+word_count_AL %>% 
+    arrange(desc(n)) %>%
+    slice(1:3) %>%
+    ggplot(., aes(x=word, y=n))+
+              geom_bar(stat='identity')
+top_n(word_count_AL, n=3, n) %>%
+          ggplot(., aes(x=word, y=n))+
+              geom_bar(stat='identity')
+word_count_AL
+```
+
+```{r}
+# Create comparison word cloud data SF DATA
+library(textshape)
+library(tidytext)
+
+wordcloud_tweetSF = c(
+  paste(tweets.covid19SF$text[(SF$sentiment=="anger") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="anticipation") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="disgust") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="fear") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="joy") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="sadness") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="surprise") > 0], collapse=" "),
+  paste(tweets.covid19SF$text[(SF$sentiment=="trust") > 0], collapse=" ")
 )
-```
 
+# create corpus
+corpusSF = Corpus(VectorSource(wordcloud_tweetSF))
+# remove punctuation, convert every word in lower case and remove stop words
 
+corpusSF = tm_map(corpusSF, tolower)
+corpusSF = tm_map(corpusSF, removePunctuation)
+corpusSF = tm_map(corpusSF, removeWords, c(stopwords("english")))
+corpusSF = tm_map(corpusSF, stemDocument)
 
-```{r}
-#search tweets
-tweets.covid19 <- search_tweets("#covid19", lang = "en", n = 1000, include_rts = FALSE)
+# create document term matrix
 
-#############tweets.test <- search_fullarchive("#covid19",  n = 100, env_name = "research",  fromDate = "202003150000", toDate = "201403202359") something like this should work once we get premium access 
+tdmSF = TermDocumentMatrix(corpusSF)
 
+# convert as matrix
+tdmSF = as.matrix(tdmSF)
+tdmnewSF <- tdmSF[nchar(rownames(tdmSF)) < 11,]
 
-tweets.coronavirus <- search_tweets("#coronavirus", lang = "en", n = 1000, include_rts = FALSE)
-tweets.airquality <- search_tweets("airquality", lang = "en", n = 1000, include_rts = FALSE)
-```
-
-I searched for #covid19, #coronavirus, and #airquality for now because I saw that airquality had improved from people sheltering in place, but searching it didn't really help because this R package only takes from data 6-9 days prior (and a lot of shelter in place orders have been lifted already)
-
-```{r}
-#stemming objects
-#strip text
-tweets.covid19$stripped_text <- gsub("http\\S+","",tweets.covid19$text)
-tweets.coronavirus$stripped_text <- gsub("http\\S+","",tweets.coronavirus$text)
-tweets.airquality$stripped_text <- gsub("http\\S+","",tweets.airquality$text)
-
-#stem and clean covid19
-tweets.covid19_stem <- tweets.covid19 %>% ## couldn't get this to work
-  select(stripped_text) %>% # selects this column
-  unnest_tokens(word, stripped_text)   #cleans text using tidy text. 
-cleaned_tweets.covid19 <- tweets.covid19_stem%>%
-  anti_join(stop_words)
-head(cleaned_tweets.covid19)
-
-#stem and clean coronavirus
-tweets.coronavirus_stem <- tweets.coronavirus %>%
-  select(stripped_text) %>%
-  unnest_tokens(word, stripped_text)
-cleaned_tweets.coronavirus <- tweets.coronavirus_stem%>%
-  anti_join(stop_words)
-head(cleaned_tweets.coronavirus)
-
-#stem and clean nature
-tweets.airquality_stem <- tweets.airquality %>%
-  select(stripped_text) %>%
-  unnest_tokens(word, stripped_text)
-cleaned_tweets.airquality <- tweets.airquality_stem%>%
-  anti_join(stop_words)
-head(cleaned_tweets.airquality)
-```
-^^this chunk is where I cleaned the text
-
-```{r}
-#visualize cleaned #covid19 tweets
-cleaned_tweets.covid19%>%
-  count(word, sort = TRUE)%>%
-  top_n(10)%>%
-  mutate(word = reorder(word, n))%>%
-  ggplot(aes(x=word, y =n))+
-  geom_col()+
-  xlab(NULL)+
-  coord_flip()+
-  theme_classic()+
-  labs(x = "Count",
-       y = "Unique words",
-       title = "Unique word counts found in #covid19 tweets")
-
-#visualize #coronavirus tweets
-cleaned_tweets.coronavirus%>%
-  count(word, sort = TRUE)%>%
-  top_n(10)%>%
-  mutate(word = reorder(word, n))%>%
-  ggplot(aes(x=word, y =n))+
-  geom_col()+
-  xlab(NULL)+
-  coord_flip()+
-  theme_classic()+
-  labs(x = "Count",
-       y = "Unique words",
-       title = "Unique word counts found in #coronavirus tweets")
-
-#visualize #airquality tweets
-cleaned_tweets.airquality%>%
-  count(word, sort = TRUE)%>%
-  top_n(10)%>%
-  mutate(word = reorder(word, n))%>%
-  ggplot(aes(x=word, y =n))+
-  geom_col()+
-  xlab(NULL)+
-  coord_flip()+
-  theme_classic()+
-  labs(x = "Count",
-       y = "Unique words",
-       title = "Unique word counts found in #airquality tweets")
+# column name binding
+colnames(tdmSF) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+colnames(tdmnewSF) <- colnames(tdmSF)
+comparison.cloud(tdmnewSF, random.order=FALSE,
+                 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+                 title.size=1, max.words=100, scale=c(2.5, 0.4),rot.per=0.4)
 ```
 
 ```{r}
-#get bing lexicon sentiment
-get_sentiments("bing")%>%
-  filter(sentiment=="positive")
-
-get_sentiments("bing")%>%
-  filter(sentiment=="negative")
-
-#afinn sentiments
-get_sentiments("afinn")%>%
-  filter(value=="3")
-
-get_sentiments("afinn")%>%
-  filter(value=="-3")
-```
-
-```{r}
-#bing sentiment analysis
-bing_covid19 = cleaned_tweets.covid19%>%
-  inner_join(get_sentiments("bing"))%>%
-  count(word, sentiment, sort = TRUE) %>%
-  ungroup()
-bing_covid19
-
-bing_covid19%>%
-  group_by(sentiment)%>%
-  top_n(10)%>%
-  ungroup()%>%
-  mutate(word = reorder(word, n))%>%
-  ggplot(aes(word, n, fill = sentiment))+
-  geom_col(show.legend = FALSE)+
-  facet_wrap(~sentiment, scales = "free_y")+
-  labs(title = "Tweets containing '#covid19'",
-       y = "contribution to sentiment",
-       x = NULL)+
-  coord_flip() +
-  theme_bw()
-```
-This figure shows specific words and how they contribute to the sentiment for #covid19. I can do this same thing with the other hashtags though.
-
-```{r}
-sentiment_bing = function(twt){
-  #step 1: perform basic text cleaning(on the tweet), as seen earlier
-  twt_tbl = tibble(text = twt)%>%
-    mutate(
-      #remove http elements
-      stripped_text = gsub("http\\S+","",text)
-    )%>%
-    unnest_tokens(word, stripped_text)%>%
-    anti_join(stop_words)%>%
-    inner_join(get_sentiments("bing"))%>% #merge with bing sentiment
-    count(word,sentiment,sort=TRUE)%>%
-    ungroup()%>%
-    #create "score" column that assigns a -1 to all negative words, and 1 to all positive words
-    mutate(
-      score = case_when(
-        sentiment=='negative'~n*(-1),
-        sentiment=='positive'~n*1)
-      )
-  ##calculate total score
-  sent.score = case_when(
-    nrow(twt_tbl)==0~0, #if there are no words, score is 0
-    nrow(twt_tbl)>0~sum(twt_tbl$score)
-  )
-  ##this is to keep track of which tweets contained no words at all from the bing list
-  zero.type = case_when(
-    nrow(twt_tbl)==0~"Type 1", #type 1: no words at all, zero =  no
-    nrow(twt_tbl)>0~"Type 2" #type 2: zero means sum of words = 0
-    )
-  list(score = sent.score, type = zero.type, twt_tbl = twt_tbl)
-}
-```
-
-```{r}
-tweets.covid19_sent = lapply(tweets.covid19$text,function(x){sentiment_bing(x)})
-tweets.coronavirus_sent = lapply(tweets.coronavirus$text,function(x){sentiment_bing(x)})
-tweets.airquality_sent = lapply(tweets.airquality$text,function(x){sentiment_bing(x)})
-```
-
-```{r}
-pandemic_sentiment = bind_rows(
-  tibble(
-    hashtag = '#covid19',
-    score = unlist(map(tweets.covid19_sent,'score')),
-    type = unlist(map(tweets.covid19_sent,'type'))
-  ),
-  tibble(
-    hashtag = '#coronavirus',
-    score = unlist(map(tweets.coronavirus_sent,'score')),
-    type = unlist(map(tweets.coronavirus_sent,'type'))
-  ),
-  tibble(
-    hashtag = '#airquality',
-    score = unlist(map(tweets.airquality_sent,'score')),
-    type = unlist(map(tweets.airquality_sent,'type'))
-  )
+# Create comparison word cloud data SEA DATA
+wordcloud_tweetSJ = c(
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="anger") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="anticipation") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="disgust") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="fear") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="joy") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="sadness") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="surprise") > 0], collapse=" "),
+  paste(tweets.covid19sanjose$text[(SJ$sentiment=="trust") > 0], collapse=" ")
 )
-pandemic_sentiment
+
+# create corpus
+corpusSJ = Corpus(VectorSource(wordcloud_tweetSJ))
+# remove punctuation, convert every word in lower case and remove stop words
+
+corpusSJ = tm_map(corpusSJ, tolower)
+corpusSJ = tm_map(corpusSJ, removePunctuation)
+corpusSJ = tm_map(corpusSJ, removeWords, c(stopwords("english")))
+corpusSJ = tm_map(corpusSJ, stemDocument)
+
+# create document term matrix
+
+tdmSJ = TermDocumentMatrix(corpusSJ)
+# convert as matrix
+tdmSJ = as.matrix(tdmSJ)
+tdmnewSJ <- tdmSJ[nchar(rownames(tdmSJ)) < 11,]
+
+# column name binding
+colnames(tdmSJ) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+colnames(tdmnewSJ) <- colnames(tdmSJ)
+comparison.cloud(tdmnewSJ, random.order=FALSE,
+                 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+                 title.size=1, max.words=75, scale=c(2.5, 0.4),rot.per=0.4)
 ```
 
 ```{r}
-#visualize the three sentiments
-ggplot(pandemic_sentiment,aes(x=score, fill = hashtag))+
-  geom_histogram(bins = 15, alpha=0.6)+
-  facet_grid(~hashtag)+
-  theme_bw()
-```
-This figure shows that there are more negative sentiments surrounding #covid19 and #coronavirus, but seemingly either neutral or more positive sentiment toward #airquality (when you exclude the 0 values meaning no sentiment).
+# Create comparison word cloud data DC DATA
+wordcloud_tweetDC = c(
+  paste(tweets.covid19DC$text[(DC$sentiment=="anger") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="anticipation") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="disgust") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="fear") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="joy") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="sadness") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="surprise") > 0], collapse=" "),
+  paste(tweets.covid19DC$text[(DC$sentiment=="trust") > 0], collapse=" ")
+)
 
-```{r}
-#here is where I practiced time series plotting
-#it worked for airquality bc not much twitter data on it compared to covid/coronavirus
-rt <- search_tweets("#rstats", n = 100, include_rts = FALSE)
-tweets.airquality%>%
-  ts_plot("3 hours")+
-  ggplot2::theme_minimal()+
-  ggplot2::theme(plot.title = ggplot2::element_text(face="bold"))+
-  ggplot2::labs(
-    x=NULL, y=NULL,
-    title = "Frequency of #airquality Twitter statuses from past 9 days",
-    subtitle = "Twitter status (tweet) counts aggregated using 24 hour intervals",
-    caption = "\nSource: Data collected from Twitter's REST API via rtweet"
-  )
-```
-FROM HERE AND BELOW:
-I was experimenting trying to get geolocation data so I could see where the positive/negative sentiments were coming from. I couldn't get my Google API key to work though, and then ran into problems because I couldn't get map data, and only about 1% of all tweets are geocoded (making it hard to analyze that).
+# create corpus
+corpusDC = Corpus(VectorSource(wordcloud_tweetDC))
+# remove punctuation, convert every word in lower case and remove stop words
 
+corpusDC = tm_map(corpusDC, tolower)
+corpusDC = tm_map(corpusDC, removePunctuation)
+corpusDC = tm_map(corpusDC, removeWords, c(stopwords("english")))
+corpusDC = tm_map(corpusDC, stemDocument)
 
-```{r}
-#packages I may need for mapping
-library("dplyr")
-library("forcats")
-library(ggmap)
-register_google(key = "AIzaSyAFMKW1p3CFlrTVTUAjD2D-8phPGnCwV3U")
-#install.packages("googleway")
-```
+# create document term matrix
 
-```{r}
-#install.packages("ggmap")
-library("ggmap")
-library("forcats")
-us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
-get_stamenmap(us, zoom = 5, maptype = "toner-lite")%>% 
-  ggmap()
+tdmDC = TermDocumentMatrix(corpusDC)
 
+# convert as matrix
+tdmDC = as.matrix(tdmDC)
+tdmnewDC <- tdmDC[nchar(rownames(tdmDC)) < 11,]
 
-
-`%notin%` <- function(lhs, rhs) !(lhs %in% rhs)
-hashtags <- tweets.covid19 %>%
-  filter(
-    hashtag %notin% c("covid19"),
-    -95.39681 <= lon & lon <= -95.34188,
-    29.73631 <= lat & lat <= 29.78400
-  ) %>%
-  mutate(
-    hashtag = fct_drop(hashtag),
-    hashtag = fct_relevel(hashtag, c("covid19", "coronavirus", "airquality"))
-  )
-
-qmplot(lon, lat, data = pandemic_sentiment, maptype = "toner-lite", color = I("red"))
-```
-```{r}
-# download the data 
-download.file("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip", 
-              destfile = 'coastlines.zip')
-
-# unzip the file
-unzip(zipfile = "coastlines.zip", 
-      exdir = 'ne-coastlines-10m')
-
-library(rgdal)
-library(raster)
-library(ggplot2)
-library(rgeos)
-library(mapview)
-library(leaflet)
-library(broom) # if you plot with ggplot and need to turn sp data into dataframes
-options(stringsAsFactors = FALSE)
-
-coastlines <- readOGR("ne-coastlines-10m/ne_10m_coastline.shp")
-class(coastlines)
-library(raster)
-extent(coastlines)
-crs(coastlines)
-plot(coastlines,
-     main = "Global Coastlines")
-
-coastlines_simp <- gSimplify(coastlines,
-                             tol = .1,
-                             topologyPreserve = TRUE)
-plot(coastlines_simp,
-     main = "map with boundaries simplified")
-
-coastlines_simp_df <- SpatialLinesDataFrame(coastlines_simp, coastlines@data)
-ggplot()+
-  geom_path(data = coastlines_simp_df, aes(x = long, y = lat, group = group))+
-  coord_fixed()+
-  labs(title = "Global Coastlines - using ggplot",
-       subtitle = "my awesome subtitle",
-       x = "", y = "")
-
-mapview(coastlines_simp)
-leaflet(coastlines_simp)%>%
-  addTiles()%>%
-  addPolylines(color = "#44444", weight = 1, smoothFactor = 0.5, opacity = 1.0)
-
-library(sf)
-coastlines_sf <- st_read("ne-coastlines-10m/ne_10m_coastline.shp")
-plot(coastlines_sf[2])
+# column name binding
+colnames(tdmDC) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+colnames(tdmnewDC) <- colnames(tdmDC)
+comparison.cloud(tdmnewDC, random.order=FALSE,
+                 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+                 title.size=1, max.words=75, scale=c(2.5, 0.4),rot.per=0.4)
 ```
 
 ```{r}
-library(usmap)
-plot_usmap(regions = "states")+
-  labs(title = "US States",
-       subtitle = "blank map of states")+
-  theme(panel.background = element_rect(color = "black", fill = "lightblue"))
+# Create comparison word cloud data MESA DATA
+wordcloud_tweetFL = c(
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="anger") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="anticipation") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="disgust") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="fear") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="joy") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="sadness") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="surprise") > 0], collapse=" "),
+  paste(tweets.covid19jacksonville$text[(FL$sentiment=="trust") > 0], collapse=" ")
+)
 
-plot_usmap(include = c("CA", "ID", "NV", "OR", "WA"))+
-  labs(title = "Western US States",
-       subtitle = "These are the states in the Pacifici Timezone")
+# create corpus
+corpusFL = Corpus(VectorSource(wordcloud_tweetFL))
+# remove punctuation, convert every word in lower case and remove stop words
 
-plot_usmap(data = statepop, values = "pop_2015", color = "red") + 
-  scale_fill_continuous(name = "Population (2015)", label = scales::comma) + 
-  theme(legend.position = "right")
+corpusFL = tm_map(corpusFL, tolower)
+corpusFL = tm_map(corpusFL, removePunctuation)
+corpusFL = tm_map(corpusFL, removeWords, c(stopwords("english")))
+corpusFL = tm_map(corpusFL, stemDocument)
 
-plot_usmap(data = statepop, values = "pop_2015", color = "red") + 
-  scale_fill_continuous(
-    low = "white", high = "red", name = "tweets", label = scales::comma
-  ) + theme(legend.position = "right")
+# create document term matrix
 
-plot_usmap(
-    data = statepop, values = "pop_2015", include = c("CA", "ID", "NV", "OR", "WA"), color = "red"
-  ) + 
-  scale_fill_continuous(
-    low = "white", high = "red", name = "Population (2015)", label = scales::comma
-  ) + 
-  labs(title = "Western US States", subtitle = "These are the states in the Pacific Timezone.") +
-  theme(legend.position = "right")
+tdmFL = TermDocumentMatrix(corpusFL)
 
-usmap::plot_usmap(include = .south_region, exclude = .east_south_central)
+# convert as matrix
+tdmFL = as.matrix(tdmFL)
+tdmnewFL <- tdmFL[nchar(rownames(tdmFL)) < 11,]
 
-usmap::plot_usmap("counties", 
-                  include = c(.south_region, "IA"), 
-                  exclude = c(.east_south_central, "12"))  # 12 = FL
-
-usmap::plot_usmap("counties", fill = "yellow", alpha = 0.25,
-                  # 06065 = Riverside County, CA
-                  include = c(.south_region, "IA", "06065"),
-                  # 12 = FL, 48141 = El Paso County, TX
-                  exclude = c(.east_south_central, "12", "48141"))
-
-str(usmap::us_map())
+# column name binding
+colnames(tdmFL) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+colnames(tdmnewFL) <- colnames(tdmFL)
+comparison.cloud(tdmnewFL, random.order=FALSE,
+                 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+                 title.size=1, max.words=100, scale=c(2.5, 0.4),rot.per=0.4)
 ```
 
 ```{r}
-#THIS DIDN'T WORK
-library(ggmap)
-library(twitteR)
-setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+#OKLAHOMA
+wordcloud_tweetOK = c(
+  paste(tweets.covid19OK$text[(OK$sentiment=="anger") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="anticipation") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="disgust") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="fear") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="joy") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="sadness") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="surprise") > 0], collapse=" "),
+  paste(tweets.covid19OK$text[(OK$sentiment=="trust") > 0], collapse=" ")
+)
 
-tweets <- searchTwitter("#covid19 OR #coronavirus OR #airquality", n = 200, lang = "en")
-tweets.df <- twListToDF(tweets)
-write.csv(tweets.df, "~\\Desktop\\R Working Directory\\test.csv")
-library(leaflet)
-library(maps)
-read.csv("test.csv", stringsAsFactors = FALSE)
-m <- leaflet(mymap)%>%
-  addTiles()
+# create corpus
+corpusOK = Corpus(VectorSource(wordcloud_tweetOK))
+# remove punctuation, convert every word in lower case and remove stop words
+
+corpusOK = tm_map(corpusOK, tolower)
+corpusOK = tm_map(corpusOK, removePunctuation)
+corpusOK = tm_map(corpusOK, removeWords, c(stopwords("english")))
+corpusOK = tm_map(corpusOK, stemDocument)
+
+# create document term matrix
+
+tdmOK = TermDocumentMatrix(corpusOK)
+
+# convert as matrix
+tdmOK = as.matrix(tdmOK)
+tdmnewOK <- tdmOK[nchar(rownames(tdmOK)) < 11,]
+
+# column name binding
+colnames(tdmOK) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+colnames(tdmnewOK) <- colnames(tdmOK)
+comparison.cloud(tdmnewOK, random.order=FALSE,
+                 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+                 title.size=1, max.words=100, scale=c(2.5, 0.4),rot.per=0.4)
+```
+
+```{r}
+#birmingham
+wordcloud_tweetAL = c(
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="anger") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="anticipation") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="disgust") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="fear") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="joy") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="sadness") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="surprise") > 0], collapse=" "),
+  paste(tweets.covid19birmingham$text[(AL$sentiment=="trust") > 0], collapse=" ")
+)
+
+# create corpus
+corpusAL = Corpus(VectorSource(wordcloud_tweetAL))
+# remove punctuation, convert every word in lower case and remove stop words
+
+corpusAL = tm_map(corpusAL, tolower)
+corpusAL = tm_map(corpusAL, removePunctuation)
+corpusAL = tm_map(corpusAL, removeWords, c(stopwords("english")))
+corpusAL = tm_map(corpusAL, stemDocument)
+
+# create document term matrix
+
+tdmAL = TermDocumentMatrix(corpusAL)
+
+# convert as matrix
+tdmAL = as.matrix(tdmAL)
+tdmnewAL <- tdmAL[nchar(rownames(tdmAL)) < 11,]
+
+# column name binding
+colnames(tdmAL) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+colnames(tdmnewAL) <- colnames(tdmAL)
+comparison.cloud(tdmnewAL, random.order=FALSE,
+                 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+                 title.size=1, max.words=100, scale=c(2.5, 0.4),rot.per=0.4)
 ```
