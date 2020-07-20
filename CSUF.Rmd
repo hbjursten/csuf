@@ -351,6 +351,36 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Anger Sentiment", 
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(angerplot, 0, round(anger, 1),cex=1,pos=3) 
+
+anger2 <- c(56,42,44)
+anger3 <- c(54,45,43)
+t.test(anger2,anger3)
+nrc_count
+hist(SF$n)
+library(car)
+qqPlot(SF$n)
+par(las=3)
+bp <- ggplot(nrc_count,aes(x=sentiment,y=n,group=place))+
+  geom_col(aes(fill=sentiment=="anger"))
+bp
+bp + facet_grid(. ~ place) + theme(axis.text.x = element_text(angle=90, hjust=1))
+bp + facet_grid(sentiment ~ place) + theme(axis.text.x = element_text(angle=90, hjust=1))
+bp + facet_grid(. ~ place)+
+  theme(axis.text.x = element_text(angle=90, hjust=1))+
+  theme(strip.background = element_rect(colour="black", fill="white", 
+                                       size=1.5, linetype="solid"))
+nrc_count
+t.test(nrc_count$sentiment=="anger")
+nrc_count
+angertest <- subset(nrc_count,sentiment=="anger")
+angertest
+boxplot(n~place,data=angertest)
+angertest2 <- lm(formula = n~place,data=angertest)
+anova(angertest2)
+hist(angertest$n)
+
+library(emmeans)
+emmeans(angertest2,na.omit = angertest2,pairwise ~ place)
 ```
 
 
@@ -376,6 +406,10 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Fear Sentiment", 
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(angerplot, 0, round(fear, 1),cex=1,pos=3) 
+
+fear2 <- c(78,77,81)
+fear3 <- c(88,84,93)
+practice <- t.test(fear2,fear3)
 ```
 
 ```{r}
@@ -400,6 +434,10 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Disgust Sentiment", 
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(disgustplot, 0, round(disgust, 1),cex=1,pos=3) 
+
+disgust2 <- c(51,33,42)
+disgust3 <- c(35,37,41)
+t.test(disgust2,disgust3,paired=FALSE)
 ```
 
 ```{r}
@@ -424,6 +462,10 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Sadness Sentiment", 
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(sadnessplot, 0, round(sadness, 1),cex=1,pos=3) 
+
+sadness2 <- c(90,70,92)
+sadness3 <- c(77,73,93)
+t.test(sadness2,sadness3)
 ```
 
 ```{r}
@@ -448,6 +490,10 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Trust Sentiment",
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(trustplot, 0, round(trust, 1),cex=1,pos=3)
+
+trust2 <- c(86,64,71)
+trust3 <- c(93,105,70)
+t.test(trust2,trust3)
 ```
 
 ```{r}
@@ -472,7 +518,24 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Anticipation Sentiment",
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(anticipationplot, 0, round(anticipation, 1),cex=1,pos=3)
+
+anticipation2 <- c(66,53,58)
+anticipation3 <- c(58,70,58)
+
+t.test(trust2,trust3)
+t.test(fear2,fear3)
+t.test(sadness2,sadness3)
+t.test(anticipation2,anticipation3)
+t.test(anger2,anger3)
+t.test(surprise2,surprise3)
+t.test(disgust2,disgust3)
+t.test(joy2,joy3)
+dem <- c(trust2,fear2,sadness2,anticipation2,anger2,surprise2,disgust2,joy2)
+rep <- c(trust3,fear3,sadness,3,anticipation3,anger3,surprise3,disgust3,joy3)
+t.test(dem,rep)
 ```
+
+
 ```{r}
 #surpriseplot
 SFsurprise <- subset(SF,sentiment=="surprise")
@@ -495,7 +558,12 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Surprise Sentiment",
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(surpriseplot, 0, round(surprise, 1),cex=1,pos=3)
+
+surprise2 <- c(65,43,40)
+surprise3 <- c(53,37,51)
+t.test(surprise2,surprise3)
 ```
+
 ```{r}
 #joyplot
 SFjoy <- subset(SF,sentiment=="joy")
@@ -518,6 +586,10 @@ xlab = "City", names = c("SF", "SJ","DC","FL","OK","AL"),
 ylab = "n Tweets Containing Joy Sentiment",
 args.legend = list(title = "City", x = "topright", cex = .7), ylim = c(0, 100))
 text(joyplot, 0, round(joy, 1),cex=1,pos=3)
+
+joy2 <- c(36,21,34)
+joy3 <- c(25,39,42)
+t.test(joy2,joy3)
 ```
 
 
@@ -528,6 +600,7 @@ text_words <- covid_all %>%
   anti_join(stop_words, by = 'word') %>%
   inner_join(sentiments_n, by = 'word') %>%
   count(word, sort = TRUE)
+
 text_words
 
 word_count_SF <- text_words %>% 
@@ -581,11 +654,51 @@ word_count_AL %>%
     slice(1:3) %>%
     ggplot(., aes(x=word, y=n))+
               geom_bar(stat='identity')
-top_n(word_count_AL, n=3, n) %>%
-          ggplot(., aes(x=word, y=n))+
-              geom_bar(stat='identity')
-word_count_AL
+testforplot <- top_n(word_count_AL, n=3, n) 
+testforplot <- top_n(text_words, n=3, n) 
+testforplot
+#%>%
+#          ggplot(., aes(x=word, y=n))+
+#              geom_bar(stat='identity')
+
+t.test(anger2,mu=47.33)
+nrc_count
+hist(SF$n)
+library(car)
+qqPlot(SF$n)
+par(las=3)
+bp <- ggplot(nrc_count,aes(x=sentiment,y=n,group=place))+
+  geom_col(aes(fill=sentiment))
+nrc_count
+testforplot
+bp
+bp + facet_grid(. ~ place) + theme(axis.text.x = element_text(angle=90, hjust=1))
+bp + facet_grid(sentiment ~ place) + theme(axis.text.x = element_text(angle=90, hjust=1))
+bp + facet_grid(. ~ place)+
+  theme(axis.text.x = element_text(angle=90, hjust=1))+
+  theme(strip.background = element_rect(colour="black", fill="white", 
+                                       size=1.5, linetype="solid"))
+
+text_words$sentiment <- get_nrc_sentiment(text_words$word)
+text_words
+bp2 <- ggplot(testforplot,aes(x=word,y=n,group=word))+
+  geom_col(aes(fill=word))
+bp2
+
+nrc_count2 <- sent_nrc %>% 
+  group_by(place, sentiment, word) %>% 
+  tally()
+nrc_count2
+
+bp <- ggplot(nrc_count2,aes(x=sentiment,y=n,group=place))+
+  geom_col(aes(fill=sentiment))
+bp
+bp + facet_grid(. ~ place)+
+  theme(axis.text.x = element_text(angle=90, hjust=1))+
+  theme(strip.background = element_rect(colour="black", fill="white", 
+                                       size=1.5, linetype="solid"))
 ```
+
 
 ```{r}
 # Create comparison word cloud data SF DATA
