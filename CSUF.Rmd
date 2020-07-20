@@ -86,40 +86,40 @@ token <- rtweet::create_token(app=app_name,
 ```{r}
 #searching different locations
 #76.7%clinton support
-tweets.covid19SF <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR politics OR trump OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "37.7749,-122.4194,5mi") %>% 
-  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
-  mutate(place= "san francisco")
-tweets.covid19SF
+#tweets.covid19SF <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR politics OR trump OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "37.7749,-122.4194,5mi") %>% 
+#  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+#  mutate(place= "san francisco")
+#tweets.covid19SF
 
 #72.9%clinton support
-tweets.covid19sanjose <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR politics OR trump OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "37.3382,-121.8863,5mi") %>% 
-  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
-  mutate(place= "san jose")
-tweets.covid19sanjose
+#tweets.covid19sanjose <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR politics OR trump OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "37.3382,-121.8863,5mi") %>% 
+#  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+#  mutate(place= "san jose")
+#tweets.covid19sanjose
 
 #68.2%clinton support
-tweets.covid19DC <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "38.9072,-77.0369,5mi") %>% 
-  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
-  mutate(place= "washington DC")
-tweets.covid19DC
+#tweets.covid19DC <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "38.9072,-77.0369,5mi") %>% 
+#  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+#  mutate(place= "washington DC")
+#tweets.covid19DC
 
 #58.6%trump support
-tweets.covid19birmingham <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "33.5186,-86.8104,5mi") %>%
-  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
-  mutate(place= "birmingham")
-tweets.covid19birmingham
+#tweets.covid19birmingham <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "33.5186,-86.8104,5mi") %>%
+#  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+#  mutate(place= "birmingham")
+#tweets.covid19birmingham
 
 #58.5%trump support
-tweets.covid19OK <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "35.4676,-97.5164,5mi") %>% 
-  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
-  mutate(place= "oklahoma city")
-tweets.covid19OK
+#tweets.covid19OK <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "35.4676,-97.5164,5mi") %>% 
+#  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+#  mutate(place= "oklahoma city")
+#tweets.covid19OK
 
 #56.6% trump support
-tweets.covid19jacksonville <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "30.3322,-81.6557,5mi") %>%
-  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
-  mutate(place= "jacksonville")
-tweets.covid19jacksonville
+#tweets.covid19jacksonville <- search_tweets("#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid OR #covid AND liberal OR democrat OR conservative OR republican OR trump OR politics OR 2020 OR pandemic OR mask OR #wearamask OR ICE OR china OR #chinavirus OR #kungflu OR protest OR protesting OR hoax OR #hoax", lang = "en", n = 100, include_rts = FALSE, geocode = "30.3322,-81.6557,5mi") %>%
+#  select(user_id, created_at, screen_name, text, retweet_count, location, hashtags) %>%  
+#  mutate(place= "jacksonville")
+#tweets.covid19jacksonville
 
 
 #"#covid19 OR #coronavirus OR covid19 OR coronavirus OR covid AND liberal OR democrat OR conservative OR republican OR pandemic OR mask OR #wearamask OR #chinavirus OR #kungflu OR protest OR protesting OR #blm OR blacklivesmatter OR blm OR #blacklivesmatter"
@@ -154,11 +154,14 @@ sentiments_l <- get_sentiments('loughran')
 
 ```{r}
 #create sentiment plots
+library(tidyverse)
 sent_nrc <- covid_all %>%
   tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
   anti_join(stop_words, by = 'word') %>%
   inner_join(sentiments_n, by = 'word')
-  
+write_csv(sent_nrc,"sent_nrc.csv")
+
+#  C:\\Users\\Ron\\Desktop\\MyData.csv
 # What are the most common sentiment groups (by NRC)?
 nrc_count <- sent_nrc %>% 
   group_by(place, sentiment) %>% 
@@ -697,6 +700,10 @@ bp + facet_grid(. ~ place)+
   theme(axis.text.x = element_text(angle=90, hjust=1))+
   theme(strip.background = element_rect(colour="black", fill="white", 
                                        size=1.5, linetype="solid"))
+sent_nrc <- covid_all %>%
+  tidytext::unnest_tokens(output = word, input = text, token = 'words') %>%
+  anti_join(stop_words, by = 'word') %>%
+  inner_join(sentiments_n, by = 'word')
 ```
 
 
