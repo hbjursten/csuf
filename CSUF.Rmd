@@ -171,6 +171,36 @@ nrc_count <- sent_nrc %>%
   tally()
 nrc_count
 
+###################################### ADDED BY LILY:
+nrc_lily <- sent_nrc %>% 
+  group_by(place, sentiment, word) %>% 
+  tally()
+
+## see n counts overall ordered
+nrc_lily_ordered <- nrc_lily %>% 
+  arrange(-n)  
+
+#see n counts of words per sentiment and location ordered but now realizing there are not not that many of some 
+
+nrc_lily_ordered <- nrc_lily %>% 
+  arrange(place, sentiment,-n) 
+
+#you can decide what to remove here ive just taken out the 1s for each sentiment combo or your can try to get slice max top n working but confusing cause for some you only have n =1 for all words + sentiment combos
+nrc_lily_removed_ones <- nrc_lily_ordered %>% 
+  filter(n >1)
+
+#here is that table with <10 removed
+nrc_lily_removed_below_ten <- nrc_lily_ordered %>% 
+  filter(n >9)
+#maybe look at why black is under saddness for dc tweets?
+
+#use facet wrap to graph by location and sentiment 
+
+######################################### END OF ADDED BY LILY
+
+
+
+
 nrc_count <- nrc_count %>%
   mutate(sentiment = factor(sentiment, levels = c("joy","disgust","surprise","anger","anticipation","sadness","fear","trust","positive","negative")))
 #you can turn these into proportions rather than counts. 
